@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"strconv"
 	"strings"
 )
@@ -17,25 +16,23 @@ type Password struct {
 	password string
 }
 
-func (p Password) isValidTaskOne() bool {
+func (p Password) isValidTaskOne() int {
 	count := strings.Count(p.password, string(p.char))
 	if count >= p.min && count <= p.max {
-		return true
+		return 1
 	}
-
-	return false
+	return 0
 }
 
-func (p Password) isValidTaskTwo() bool {
+func (p Password) isValidTaskTwo() int {
+	// Task two
 	if p.password[p.min-1] == p.char && p.password[p.max-1] != p.char {
-		return true
+		return 1
 	}
-
 	if p.password[p.max-1] == p.char && p.password[p.min-1] != p.char {
-		return true
+		return 1
 	}
-
-	return false
+	return 0
 }
 
 func readFile(name string) ([]Password, error) {
@@ -50,11 +47,19 @@ func readFile(name string) ([]Password, error) {
 	fileScanner.Split(bufio.ScanLines)
 	var passwords []Password
 
-	// split je lepsi!
+	// row format is like '4-8 g: ggtxgtgbg'
 	for fileScanner.Scan() {
 		row := fileScanner.Text()
 
-		match1 := regexp.MustCompile(`(.*?)\-`).FindStringSubmatch(row)
+		// split by space
+		by_space := strings.Split(row, " ")
+		min, _ := strconv.Atoi(strings.Split(by_space[0], "-")[0])
+		max, _ := strconv.Atoi(strings.Split(by_space[0], "-")[1])
+		char := by_space[1][0]
+		password := by_space[2]
+
+		/* BAD SOLUTION  */
+		/* match1 := regexp.MustCompile(`(.*?)\-`).FindStringSubmatch(row)
 		min, _ := strconv.Atoi(match1[1])
 
 		match2 := regexp.MustCompile(`\-(.*?)\ `).FindStringSubmatch(row)
@@ -62,11 +67,9 @@ func readFile(name string) ([]Password, error) {
 
 		char := regexp.MustCompile(`\ (.*?)\:`).FindString(row)[0]
 
-		password := regexp.MustCompile(`\:\ (.*?)$`).FindStringSubmatch(row)
+		password := regexp.MustCompile(`\:\ (.*?)$`).FindStringSubmatch(row) */
 
-		p := Password{min, max, byte(char), password[1]}
-
-		passwords = append(passwords, p)
+		passwords = append(passwords, Password{min, max, byte(char), password})
 	}
 
 	file.Close()
@@ -85,13 +88,8 @@ func main() {
 	countTaskOne, countTaskTwo := 0, 0
 
 	for _, p := range passwords {
-		if p.isValidTaskOne() {
-			countTaskOne++
-		}
-
-		if p.isValidTaskTwo() {
-			countTaskTwo++
-		}
+		countTaskOne += p.isValidTaskOne()
+		countTaskTwo += p.isValidTaskTwo()
 	}
 
 	fmt.Println("Task one:", countTaskOne)
