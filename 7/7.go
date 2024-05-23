@@ -8,7 +8,7 @@ import (
 	"strings"
 )
 
-type BagContain struct {
+type BagInBag struct {
 	value int
 	color string
 }
@@ -31,15 +31,15 @@ func readFile(name string) ([]string, error) {
 	return full_strings, nil
 }
 
-func howManyBagsBagContain(bagColor string, m map[string][]BagContain) int {
+func howManyBagsBagInBag(bagColor string, m map[string][]BagInBag) int {
 	sum := 0
 	for _, bag := range m[bagColor] {
-		sum += bag.value * (1 + howManyBagsBagContain(bag.color, m))
+		sum += bag.value * (1 + howManyBagsBagInBag(bag.color, m))
 	}
 	return sum
 }
 
-func containsBag(bagColor string, color string, m map[string][]BagContain) bool {
+func containsBag(bagColor string, color string, m map[string][]BagInBag) bool {
 	for _, bag := range m[bagColor] {
 		if bag.color == color {
 			return true
@@ -58,30 +58,29 @@ func main() {
 		return
 	}
 
-	bags := map[string][]BagContain{}
+	bags := map[string][]BagInBag{}
 
 	for _, rule := range rules {
 		splitted := strings.Split(rule, " ")
 		name := splitted[0] + splitted[1]
+
 		if splitted[4] != "no" {
 			// Bag contains 1 other bag at least
-			by_commas := strings.Split(rule, ",")
-			for _, bag := range by_commas {
+			for _, bag := range strings.Split(rule, ",") {
 				splitted = strings.Split(bag, " ")
-				str_len := len(splitted)
-				num, _ := strconv.Atoi(splitted[str_len-4])
-				b := BagContain{num, splitted[str_len-3] + splitted[str_len-2]}
-				bags[name] = append(bags[name], b)
+				num, _ := strconv.Atoi(splitted[len(splitted)-4])
+				bagName := splitted[len(splitted)-3] + splitted[len(splitted)-2]
+				bags[name] = append(bags[name], BagInBag{num, bagName})
 			}
 		}
 	}
 
 	containShinyGold := 0
-	for color, _ := range bags {
+	for color := range bags {
 		if containsBag(color, "shinygold", bags) {
 			containShinyGold++
 		}
 	}
 	fmt.Println("Task one:", containShinyGold)
-	fmt.Println("Task two:", howManyBagsBagContain("shinygold", bags))
+	fmt.Println("Task two:", howManyBagsBagInBag("shinygold", bags))
 }
